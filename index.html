@@ -483,11 +483,66 @@ function updateBadge(){if(!currentUser)return;const n=db.activities.filter(a=>a.
 
 let mainMapI=null,mainMkrs=[];
 function initMap(){if(!mainMapI){setTimeout(()=>{mainMapI=L.map('main-map',{zoomControl:true,attributionControl:false}).setView([54.5,-2.5],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(mainMapI);refreshMap();},120);}else{mainMapI.invalidateSize();refreshMap();}}
-function refreshMap(){if(!mainMapI)return;mainMkrs.forEach(m=>m.remove());mainMkrs=[];const pins=db.activities.filter(a=>a.status==='approved'&&a.loc);if(!pins.length)return;pins.forEach(a=>{const m=CAT[a.category];const icon=L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:'+m.color+';border:2.5px solid white;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>',iconSize:[26,26],iconAnchor:[13,26]});mainMkrs.push(L.marker([a.loc.lat,a.loc.lng],{icon}).bindPopup('<strong style="font-family:'Playfair Display',serif;font-size:14px">'+san(a.title)+'</strong><br><span style="font-size:11px;color:#4A2838">'+san(a.loc.name)+'</span>').addTo(mainMapI));});if(pins.length===1)mainMapI.setView([pins[0].loc.lat,pins[0].loc.lng],10);else mainMapI.fitBounds(L.latLngBounds(pins.map(a=>[a.loc.lat,a.loc.lng])),{padding:[40,40]});}
+function refreshMap(){if(!mainMapI)return;mainMkrs.forEach(m=>m.remove());mainMkrs=[];const pins=db.activities.filter(a=>a.status==='approved'&&a.loc);if(!pins.length)return;pins.forEach(a=>{const m=CAT[a.category];const icon=L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:'+m.color+';border:2.5px solid white;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>',iconSize:[26,26],iconAnchor:[13,26]});mainMkrs.push(L.marker([a.loc.lat,a.loc.lng],{icon}).bindPopup('<b>'+san(a.title)+'</b><br><span style="font-size:11px;color:#4A2838">'+san(a.loc.name)+'</span>').addTo(mainMapI));});if(pins.length===1)mainMapI.setView([pins[0].loc.lat,pins[0].loc.lng],10);else mainMapI.fitBounds(L.latLngBounds(pins.map(a=>[a.loc.lat,a.loc.lng])),{padding:[40,40]});}
 
-function openDetail(id){const a=db.activities.find(x=>x.id===id);if(!a)return;const m=CAT[a.category];const d=[];if(a.cost)d.push('<div class="mdet">💰 '+san(a.cost)+'</div>');if(a.duration)d.push('<div class="mdet">⏱ '+san(a.duration)+'</div>');const isDone=a.status==='done';const doneDate=isDone&&a.completedAt?'<div class="mftr" style="margin-top:4px">Completed '+new Date(a.completedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'</div>':'';const actionBtn=isDone?'<button onclick="markDone('+Number(a.id)+',false)" style="width:100%;border:1.5px solid var(--bdrm);background:none;border-radius:12px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--inkl);cursor:pointer;margin-top:16px">↩ Move back to list</button>':'<button onclick="markDone('+Number(a.id)+',true)" style="width:100%;background:#2A7A4A;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Playfair Display',serif;font-size:16px;cursor:pointer;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px"><span>We did it!</span><span>🎉</span></button>';document.getElementById('mbody').innerHTML='<div style="margin-bottom:10px"><span class="tag '+(isDone?'tg-done':m.tag)+'">'+(isDone?'Completed':m.label)+'</span></div><div class="mttl">'+san(a.title)+'</div>'+(a.desc?'<div class="mdesc">'+san(a.desc)+'</div>':'')+(d.length?'<div class="mdets">'+d.join('')+'</div>':'')+(a.loc?'<div class="mloc">📍 '+san(a.loc.name)+'</div>':'')+'<div class="mftr">Added by '+san(a.addedBy)+'</div>'+doneDate+actionBtn;document.getElementById('dmodal').classList.add('open');}
-async function markDone(id,done){const a=db.activities.find(x=>x.id===id);if(!a)return;a.status=done?'done':'approved';if(done)a.completedAt=Date.now();else delete a.completedAt;saveLocal();closeMod('dmodal');renderHome();await upsertAct(a);showToast(done?'Adventure completed! 🎉':'Moved back to your list');}
+function openDetail(id){
+  var a=db.activities.find(function(x){return x.id===id;});
+  if(!a)return;
+  var m=CAT[a.category];
+  var isDone=a.status==='done';
+  var box=document.getElementById('mbody');
+  box.innerHTML='';
 
+  var tagDiv=document.createElement('div');
+  tagDiv.style.marginBottom='10px';
+  tagDiv.innerHTML='<span class="tag '+(isDone?'tg-done':m.tag)+'">'+(isDone?'Completed':m.label)+'</span>';
+  box.appendChild(tagDiv);
+
+  var ttl=document.createElement('div');ttl.className='mttl';ttl.textContent=a.title;box.appendChild(ttl);
+
+  if(a.desc){var desc=document.createElement('div');desc.className='mdesc';desc.textContent=a.desc;box.appendChild(desc);}
+
+  if(a.cost||a.duration){
+    var dets=document.createElement('div');dets.className='mdets';
+    if(a.cost){var dc=document.createElement('div');dc.className='mdet';dc.textContent='💰 '+a.cost;dets.appendChild(dc);}
+    if(a.duration){var dd=document.createElement('div');dd.className='mdet';dd.textContent='⏱ '+a.duration;dets.appendChild(dd);}
+    box.appendChild(dets);
+  }
+
+  if(a.loc){var loc=document.createElement('div');loc.className='mloc';loc.textContent='📍 '+a.loc.name;box.appendChild(loc);}
+
+  var ftr=document.createElement('div');ftr.className='mftr';ftr.textContent='Added by '+a.addedBy;box.appendChild(ftr);
+
+  if(isDone&&a.completedAt){
+    var ftr2=document.createElement('div');ftr2.className='mftr';ftr2.style.marginTop='4px';
+    ftr2.textContent='Completed '+new Date(a.completedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    box.appendChild(ftr2);
+  }
+
+  var btn=document.createElement('button');
+  btn.style.cssText='width:100%;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;';
+  var aid=Number(a.id);
+  if(isDone){
+    btn.textContent='↩ Move back to list';
+    btn.style.cssText+='border:1.5px solid #c4a0b0;background:none;color:#8A6878;';
+    btn.addEventListener('click',function(){markDone(aid,false);});
+  }else{
+    btn.innerHTML='<span>We did it!</span><span>🎉</span>';
+    btn.style.cssText+='border:none;background:#2A7A4A;color:#fff;';
+    btn.addEventListener('click',function(){markDone(aid,true);});
+  }
+  box.appendChild(btn);
+  document.getElementById('dmodal').classList.add('open');
+}
+async function markDone(id,done){
+  var a=db.activities.find(function(x){return x.id===id;});
+  if(!a)return;
+  a.status=done?'done':'approved';
+  if(done)a.completedAt=Date.now();else delete a.completedAt;
+  saveLocal();closeMod('dmodal');renderHome();
+  await upsertAct(a);
+  showToast(done?'Adventure completed! 🎉':'Moved back to your list');
+}
 function openSettings(){document.getElementById('swoami').textContent=currentUser?currentUser.name:'–';document.getElementById('smodal').classList.add('open');}
 function closeMod(id){document.getElementById(id).classList.remove('open');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
