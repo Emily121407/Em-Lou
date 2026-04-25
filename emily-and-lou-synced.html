@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>The Adventures of Emily & Lou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --w9:#1A0812;--w8:#2E1224;--w7:#3D1A30;--w6:#52263E;--w5:#6B3450;
+  --w3:#B07890;--w2:#D4AABB;--w1:#F5E8EE;
+  --g6:#9A7200;--g5:#C8921A;--g4:#E0A828;--g3:#F5C84A;--g1:#FBF0D0;--g0:#FEF9EC;
+  --r5:#B05040;--r4:#C8685A;--r1:#F5E4E0;
+  --t6:#1A3A4E;--t5:#2A5268;--t1:#D0E4EC;
+  --parch:#FAF2E4;--paper:#FFFCF7;--ink:#1A0810;--inkm:#4A2838;--inkl:#8A6878;
+  --bdr:rgba(58,26,48,0.12);--bdrm:rgba(58,26,48,0.22);--danger:#B03030;
+}
+body{font-family:'Nunito',sans-serif;background:var(--w9);color:var(--ink);min-height:100vh;display:flex;justify-content:center}
+.screen{display:none;width:100%;max-width:430px;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── AUTH ── */
+#screen-auth{background:var(--w8);justify-content:flex-end;overflow:hidden;position:relative}
+.stars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twk var(--d,2s) ease-in-out infinite var(--del,0s)}
+@keyframes twk{0%,100%{opacity:var(--o,.3)}50%{opacity:1}}
+.mountains{position:absolute;bottom:0;left:0;right:0;height:270px;pointer-events:none}
+.auth-card{position:relative;z-index:10;background:var(--paper);border-radius:30px 30px 0 0;padding:30px 24px 44px;width:100%;animation:up .4s cubic-bezier(.34,1.1,.64,1)}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.brand{text-align:center;margin-bottom:22px}
+.brand small{display:block;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--inkl);margin-bottom:3px}
+.brand-title{font-family:'Playfair Display',serif;font-size:28px;color:var(--ink);line-height:1.2}
+.brand-title em{color:var(--g5);font-style:italic}
+.astep{display:none}.astep.active{display:block}
+.pick-label{font-size:14px;color:var(--inkm);text-align:center;margin-bottom:16px;font-weight:600}
+.ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ex-card{border:2px solid var(--bdr);border-radius:18px;padding:20px 12px;text-align:center;cursor:pointer;background:#fff;transition:border-color .2s,transform .15s,background .2s}
+.ex-card:active{transform:scale(.96)}.ex-card.on{border-color:var(--g5);background:var(--g0)}
+.ex-av{width:52px;height:52px;border-radius:50%;margin:0 auto 10px;background:var(--w7);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:20px;color:var(--g3)}
+.ex-card.on .ex-av{background:var(--g5);color:var(--w9)}
+.ex-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink)}
+.ksec{display:none;margin-top:2px}.ksec.show{display:block}
+.kwho{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--inkl);text-align:center;margin-bottom:10px}
+.kinput-wrap{position:relative;margin-bottom:8px}
+.kinput{width:100%;border:2px solid var(--bdr);border-radius:12px;padding:14px 52px 14px 14px;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--ink);background:#fff;outline:none;letter-spacing:2px;transition:border-color .2s;text-transform:uppercase}
+.kinput:focus{border-color:var(--g5)}.kinput.err{border-color:var(--danger);animation:shk .35s ease}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.paste-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:var(--inkl);font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;padding:4px 6px}
+.paste-btn:active{color:var(--g5)}
+.khint{font-size:11px;color:var(--inkl);text-align:center;margin-bottom:12px;line-height:1.5}
+.lockout{font-size:13px;color:var(--danger);text-align:center;font-weight:700;padding:10px;background:#FDF0F0;border-radius:10px;margin-bottom:12px;display:none}
+.lockout.show{display:block}
+.abtn{width:100%;background:var(--w7);color:var(--g1);border:none;border-radius:14px;padding:15px;font-family:'Playfair Display',serif;font-size:17px;cursor:pointer;transition:background .2s;display:block;text-align:center}
+.abtn:active{background:var(--w9)}.abtn.gold{background:var(--g5);color:var(--w9)}.abtn.gold:active{background:var(--g6)}
+.alink{text-align:center;font-size:13px;color:var(--inkl);margin-top:14px;cursor:pointer;text-decoration:underline}
+.sdots{display:flex;justify-content:center;gap:6px;margin-bottom:18px}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--w2);transition:background .2s}.sdot.on{background:var(--g5)}
+.sttl{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:14px;text-align:center}
+.slabel{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--inkl);font-weight:700;display:block;margin-bottom:6px;margin-top:16px}.slabel:first-child{margin-top:0}
+.sinput{width:100%;border:none;border-bottom:1.5px solid var(--bdr);padding:10px 2px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--ink);background:transparent;outline:none;transition:border-color .2s}.sinput:focus{border-color:var(--g5)}
+.key-box{background:var(--w8);border-radius:14px;padding:20px;margin:14px 0;text-align:center}
+.key-box-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,200,74,.5);margin-bottom:10px;font-weight:700}
+.key-val{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--g3);letter-spacing:3px;margin-bottom:14px;word-break:break-all}
+.copy-btn{background:var(--g5);color:var(--w9);border:none;border-radius:10px;padding:9px 20px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.copy-btn:active{background:var(--g6)}.copy-btn.done{background:#2A7A4A;color:#fff}
+.warn{background:#FFFBEB;border:1px solid #E0B030;border-radius:10px;padding:12px 14px;margin:12px 0;font-size:12px;color:#7A5010;line-height:1.6}
+.warn strong{display:block;margin-bottom:2px}
+
+/* ── LOADING STATE ── */
+.auth-loading{text-align:center;padding:12px 0;font-size:13px;color:var(--inkl);display:none}
+.auth-loading.show{display:block}
+
+/* ── MAIN APP ── */
+#screen-app{background:var(--parch)}
+.header{background:var(--w7);padding:50px 18px 12px;position:sticky;top:0;z-index:100;display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;align-items:center;justify-content:space-between}
+.app-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--g3);line-height:1.25}
+.app-name small{display:block;font-size:9px;font-family:'Nunito',sans-serif;letter-spacing:2.5px;text-transform:uppercase;color:rgba(245,200,74,.4);margin-bottom:1px}
+.hright{display:flex;align-items:center;gap:8px}
+.uchip{background:rgba(255,255,255,.1);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--g3)}
+.ibtn{border:none;background:none;cursor:pointer;color:rgba(245,200,74,.55);padding:4px;display:flex;align-items:center}
+.ibtn svg{width:20px;height:20px}.ibtn:active{color:var(--g3)}
+
+/* Sync indicator */
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#2A7A4A;flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(--g4);animation:syncpulse 1s ease-in-out infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes syncpulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.view{display:none;flex:1;overflow-y:auto;padding-bottom:88px}.view.active{display:block}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--w8);display:flex;z-index:200;padding:10px 0 22px;border-top:1px solid rgba(255,255,255,.05)}
+.nbtn{flex:1;border:none;background:none;padding:6px 2px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:rgba(210,170,187,.3);transition:color .2s;font-family:'Nunito',sans-serif;position:relative}
+.nbtn.active{color:var(--g4)}.nbtn svg{width:20px;height:20px}
+.nlbl{font-size:9px;letter-spacing:.8px;text-transform:uppercase;font-weight:700}
+.badge{position:absolute;top:2px;right:calc(50% - 18px);background:var(--r4);color:#fff;border-radius:10px;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.shdr{padding:18px 16px 8px;display:flex;align-items:center;gap:10px}
+.slbl2{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--inkl);font-weight:700;white-space:nowrap}
+.sline{flex:1;height:1px;background:var(--bdr)}
+.acard{margin:0 14px 10px;background:var(--paper);border:1px solid var(--bdr);border-radius:16px;padding:14px 14px 14px 18px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:transform .15s;position:relative;overflow:hidden}
+.acard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.ac-local::before{background:var(--t5)}.ac-lm::before{background:var(--r4)}.ac-wknd::before{background:var(--w5)}.ac-bucket::before{background:var(--g5)}
+.acard:active{transform:scale(.98)}
+.aico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ai-local{background:var(--t1)}.ai-lm{background:var(--r1)}.ai-wknd{background:var(--w1)}.ai-bucket{background:var(--g1)}
+.ainf{flex:1;min-width:0}
+.attl{font-family:'Playfair Display',serif;font-size:15px;color:var(--ink);margin-bottom:4px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.amet{font-size:11px;color:var(--inkl);font-family:'Nunito',sans-serif;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:9px;font-family:'Nunito',sans-serif;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.6px;text-transform:uppercase}
+.tg-l{background:var(--t1);color:var(--t6)}.tg-lm{background:var(--r1);color:var(--r5)}.tg-w{background:var(--w1);color:var(--w6)}.tg-b{background:var(--g1);color:var(--g6)}.tg-p{background:#FEF3CD;color:#7A5A04}.tg-done{background:#E8F5EE;color:#2A7A4A}
+.mpil{font-size:11px;font-weight:600;color:var(--inkl)}
+.acard.done-card{opacity:.7}.acard.done-card .attl{text-decoration:line-through;color:var(--inkl)}
+.done-tick{width:28px;height:28px;border-radius:50%;background:#2A7A4A;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:center}
+.done-tick svg{width:14px;height:14px;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.empty{text-align:center;padding:52px 28px;color:var(--inkl)}
+.empty-i{font-size:44px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.7;color:var(--inkm)}
+
+/* Can't decide */
+.cdwrap{padding:28px 20px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.cdttl{font-family:'Playfair Display',serif;font-size:26px;text-align:center;color:var(--ink);line-height:1.3}
+.cdttl em{color:var(--g5);font-style:italic}
+.cdsub{font-size:13px;color:var(--inkl);text-align:center;line-height:1.6;max-width:280px}
+.cdfilt{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.fchip{border:1.5px solid var(--bdr);background:var(--paper);border-radius:20px;padding:6px 14px;font-size:12px;font-family:'Nunito',sans-serif;font-weight:700;color:var(--inkm);cursor:pointer;transition:all .2s}
+.fchip.on{background:var(--w7);border-color:var(--w7);color:var(--g3)}
+.spinbtn{width:100%;max-width:280px;background:var(--w7);color:var(--g1);border:none;border-radius:14px;padding:16px;font-family:'Playfair Display',serif;font-size:18px;cursor:pointer;transition:background .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:10px}
+.spinbtn:active{transform:scale(.97);background:var(--w9)}
+.rcard{width:100%;background:var(--paper);border:2px solid var(--w6);border-radius:18px;padding:22px;text-align:center;display:none;animation:pop .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.rcard.vis{display:block}
+.ri{font-size:36px;margin-bottom:10px}.rt{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:8px;line-height:1.3}
+.rd{font-size:13px;color:var(--inkm);line-height:1.6;margin-bottom:12px}.rm{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}.rmi{font-size:12px;color:var(--inkl);font-weight:600}
+@keyframes spn{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}.spinning{animation:spn .5s ease-out}
+
+/* Add form */
+.addform{padding:20px 16px 0}
+.flbl{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--inkl);font-weight:700;display:block;margin-bottom:6px;margin-top:18px}.flbl:first-child{margin-top:0}
+.fopt{opacity:.65;font-size:9px}
+input[type=text],textarea{width:100%;border:1.5px solid var(--bdr);border-radius:10px;padding:11px 13px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus,textarea:focus{border-color:var(--g5)}
+textarea{resize:none;height:72px;line-height:1.5}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.catgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.catopt{border:1.5px solid var(--bdr);border-radius:12px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center;background:var(--paper)}
+.catopt .ci{font-size:22px;margin-bottom:5px}.catopt .cn{font-size:12px;font-weight:700;color:var(--inkm)}
+.sel-local{border-color:var(--t5);background:var(--t1)}.sel-lm{border-color:var(--r4);background:var(--r1)}.sel-wknd{border-color:var(--w5);background:var(--w1)}.sel-bucket{border-color:var(--g5);background:var(--g1)}
+.mapp{width:100%;height:190px;border-radius:12px;overflow:hidden;border:1.5px solid var(--bdr);position:relative}
+#add-map{width:100%;height:100%}
+.maphint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(26,8,18,.8);color:var(--g1);font-size:11px;padding:4px 12px;border-radius:10px;pointer-events:none;white-space:nowrap;z-index:999}
+.locd{font-size:12px;font-weight:700;color:var(--g6);margin-top:6px;min-height:18px}
+.subbtn{width:100%;background:var(--w7);color:var(--g1);border:none;border-radius:14px;padding:15px;font-family:'Playfair Display',serif;font-size:17px;cursor:pointer;margin-top:22px;margin-bottom:24px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.subbtn:active{background:var(--w9);transform:scale(.98)}
+
+/* Pending */
+.pcard{margin:10px 14px;background:var(--paper);border:1px solid var(--bdr);border-radius:16px;overflow:hidden}
+.pcbody{padding:14px;display:flex;gap:12px;align-items:flex-start}
+.pfrom{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--inkl);margin-bottom:3px}
+.pdesc{font-size:13px;color:var(--inkm);line-height:1.5;margin-top:4px}
+.pdet{font-size:12px;color:var(--inkl);margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;font-weight:600}
+.pcact{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--bdr)}
+.actbtn{border:none;background:none;padding:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.actbtn:active{opacity:.7}.actno{color:var(--inkl);border-right:1px solid var(--bdr)}.actyes{color:var(--g5)}
+
+/* Map */
+#main-map{width:100%;height:calc(100vh - 142px)}
+.mapleg{position:absolute;top:10px;right:10px;background:var(--paper);border:1px solid var(--bdr);border-radius:10px;padding:8px 12px;z-index:999;font-size:11px;font-family:'Nunito',sans-serif;font-weight:600;color:var(--inkm)}
+.li{display:flex;align-items:center;gap:6px;margin-bottom:4px}.li:last-child{margin-bottom:0}.ld{width:10px;height:10px;border-radius:50%}
+
+/* Modals */
+.movo{display:none;position:fixed;inset:0;background:rgba(26,8,18,.5);z-index:500;justify-content:flex-end;flex-direction:column;max-width:430px;left:50%;transform:translateX(-50%)}
+.movo.open{display:flex}
+.mbox{background:var(--paper);border-radius:26px 26px 0 0;padding:20px 20px 44px;max-height:78vh;overflow-y:auto}
+.mhdl{width:36px;height:4px;background:var(--bdr);border-radius:2px;margin:0 auto 18px}
+.mttl{font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:6px}
+.mdesc{font-size:14px;color:var(--inkm);line-height:1.65;margin-bottom:14px}
+.mdets{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.mdet{font-size:13px;font-weight:600;color:var(--inkm);display:flex;align-items:center;gap:4px}
+.mloc{font-size:13px;color:var(--g6);font-weight:700;display:flex;align-items:center;gap:4px;margin-bottom:10px}
+.mftr{font-size:11px;color:var(--inkl);margin-top:8px}
+.ssec{margin-bottom:22px}
+.ssec h3{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.sinfo{font-size:12px;color:var(--inkl);line-height:1.6;margin-bottom:10px}
+.sbtn{border:1.5px solid var(--bdrm);background:none;border-radius:10px;padding:10px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--inkm);cursor:pointer;margin-right:8px;margin-top:4px}
+.sbtn:active{background:var(--w1)}.sbtn.danger{border-color:var(--danger);color:var(--danger)}
+.sdot-g{width:8px;height:8px;border-radius:50%;background:#2A7A4A;display:inline-block;margin-right:4px}
+
+/* Lock screen */
+#lockscreen{display:none;position:fixed;inset:0;background:var(--w9);z-index:900;justify-content:center;align-items:center;flex-direction:column;gap:20px;max-width:430px;left:50%;transform:translateX(-50%)}
+#lockscreen.show{display:flex}
+#lockscreen .ltitle{font-family:'Playfair Display',serif;font-size:26px;color:var(--g3)}
+#lockscreen p{font-size:13px;color:rgba(210,170,187,.6);font-family:'Nunito',sans-serif}
+#lock-kinput{width:240px;border:2px solid rgba(210,170,187,.25);border-radius:12px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--g3);background:rgba(255,255,255,.06);outline:none;letter-spacing:2px;text-align:center;text-transform:uppercase;transition:border-color .2s}
+#lock-kinput:focus{border-color:var(--g5)}
+#lock-kinput.err{border-color:var(--danger);animation:shk .35s ease}
+.lock-err{font-size:12px;color:var(--danger);font-family:'Nunito',sans-serif;font-weight:700;min-height:18px;text-align:center}
+.toast{position:fixed;top:112px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--w8);color:var(--g3);padding:10px 20px;border-radius:20px;font-size:13px;font-family:'Nunito',sans-serif;font-weight:700;z-index:1000;opacity:0;transition:all .3s;white-space:nowrap;max-width:300px;text-align:center;border:1px solid rgba(245,200,74,.15)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="screen active" id="screen-auth">
+  <div class="stars" id="stars"></div>
+  <svg class="mountains" viewBox="0 0 430 270" preserveAspectRatio="none">
+    <polygon points="0,270 0,170 70,75 150,150 215,45 295,140 355,75 430,120 430,270" fill="#120608" opacity=".95"/>
+    <polygon points="0,270 0,195 55,135 125,190 195,105 275,180 335,115 430,155 430,270" fill="#1A0812" opacity=".97"/>
+    <polygon points="0,270 0,225 40,190 100,230 165,165 240,220 305,172 380,208 430,190 430,270" fill="#2E1224"/>
+  </svg>
+  <div class="auth-card">
+    <div class="brand">
+      <small>The Adventures of</small>
+      <div class="brand-title">Emily &amp; <em>Lou</em></div>
+    </div>
+
+    <!-- PICK EXPLORER -->
+    <div class="astep active" id="step-pick">
+      <div class="pick-label">Who's exploring today?</div>
+      <div class="auth-loading" id="auth-loading">Connecting to your adventure book…</div>
+      <div class="ex-grid" id="ex-cards"></div>
+      <div class="ksec" id="ksec">
+        <div class="kwho" id="kwho">Enter your API key</div>
+        <div class="kinput-wrap">
+          <input class="kinput" id="kinput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="characters" oninput="fmtKey(this)" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="paste-btn" onclick="pasteKey()">Paste</button>
+        </div>
+        <div class="khint">Your unique key from when you set up</div>
+        <div class="lockout" id="lockout-msg"></div>
+        <button class="abtn gold" onclick="doLogin()">Unlock my adventure →</button>
+        <div class="alink" onclick="resetPick()">← Choose a different explorer</div>
+      </div>
+      <div class="alink" style="margin-top:14px" id="setup-link" onclick="goSetup()">First time? Set up your adventure book</div>
+    </div>
+
+    <!-- SETUP 1 -->
+    <div class="astep" id="step-s1">
+      <div class="sdots"><div class="sdot on"></div><div class="sdot"></div></div>
+      <div class="sttl">First explorer</div>
+      <label class="slabel">Your name</label>
+      <input class="sinput" id="s1n" placeholder="e.g. Emily" autocomplete="off">
+      <div class="key-box" id="kb1" style="display:none"><div class="key-box-lbl">Your API Key</div><div class="key-val" id="kv1"></div><button class="copy-btn" id="cb1" onclick="copyKey(1)">Copy key</button></div>
+      <div class="warn" id="w1" style="display:none"><strong>⚠ Save this before continuing!</strong>Screenshot or write it down — it's shown only once.</div>
+      <button class="abtn" id="s1btn" onclick="genKey1()" style="margin-top:18px">Generate my key →</button>
+      <button class="abtn gold" id="s1next" style="display:none;margin-top:10px" onclick="toStep2()">I've saved it — next →</button>
+    </div>
+
+    <!-- SETUP 2 -->
+    <div class="astep" id="step-s2">
+      <div class="sdots"><div class="sdot"></div><div class="sdot on"></div></div>
+      <div class="sttl">Second explorer</div>
+      <label class="slabel">Your name</label>
+      <input class="sinput" id="s2n" placeholder="e.g. Lou" autocomplete="off">
+      <div class="key-box" id="kb2" style="display:none"><div class="key-box-lbl">Your API Key</div><div class="key-val" id="kv2"></div><button class="copy-btn" id="cb2" onclick="copyKey(2)">Copy key</button></div>
+      <div class="warn" id="w2" style="display:none"><strong>⚠ Save this before continuing!</strong>Screenshot or write it down — it's shown only once.</div>
+      <button class="abtn" id="s2btn" onclick="genKey2()" style="margin-top:18px">Generate my key →</button>
+      <button class="abtn gold" id="s2next" style="display:none;margin-top:10px" onclick="finishSetup()">Start exploring! →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="screen-app">
+  <div class="header">
+    <div class="hrow">
+      <div class="app-name"><small>The Adventures of</small>Emily &amp; Lou ✦</div>
+      <div class="hright">
+        <div class="sync-dot" id="sync-dot" title="Sync status"></div>
+        <div class="uchip" id="uchip">–</div>
+        <button class="ibtn" onclick="openSettings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view active" id="view-home"><div id="hcontent"></div></div>
+
+  <div class="view" id="view-decide">
+    <div class="cdwrap">
+      <div class="cdttl">Can't decide?<br><em>Let fate choose!</em></div>
+      <div class="cdsub">Filter then spin — your next adventure awaits.</div>
+      <div class="cdfilt">
+        <div class="fchip on" onclick="setFilt(this,'all')">All</div>
+        <div class="fchip" onclick="setFilt(this,'local')">Local</div>
+        <div class="fchip" onclick="setFilt(this,'lm')">Last Minute</div>
+        <div class="fchip" onclick="setFilt(this,'wknd')">Weekend</div>
+        <div class="fchip" onclick="setFilt(this,'bucket')">Bucket List</div>
+      </div>
+      <button class="spinbtn" onclick="spin()"><span id="sico">🧭</span><span>Pick our adventure!</span></button>
+      <div class="rcard" id="rcard"><div class="ri" id="ri"></div><div class="rt" id="rt"></div><div class="rd" id="rd"></div><div class="rm" id="rm"></div></div>
+      <div id="cdempty" style="display:none;font-size:13px;color:var(--inkl);text-align:center;line-height:1.7;padding:0 20px">Nothing approved in that category yet!</div>
+    </div>
+  </div>
+
+  <div class="view" id="view-add">
+    <div class="addform">
+      <label class="flbl">Activity name</label>
+      <input type="text" id="ntitle" placeholder="e.g. Wild swim at Ullswater…" autocomplete="off">
+      <label class="flbl">Description</label>
+      <textarea id="ndesc" placeholder="Paint the picture — why will you love it?"></textarea>
+      <label class="flbl">Category</label>
+      <div class="catgrid">
+        <div class="catopt sel-local" id="cat-local" onclick="selC('local')"><div class="ci">🗺️</div><div class="cn">Local</div></div>
+        <div class="catopt" id="cat-lm" onclick="selC('lm')"><div class="ci">⚡</div><div class="cn">Last Minute</div></div>
+        <div class="catopt" id="cat-wknd" onclick="selC('wknd')"><div class="ci">🏕️</div><div class="cn">Weekend Away</div></div>
+        <div class="catopt" id="cat-bucket" onclick="selC('bucket')"><div class="ci">✨</div><div class="cn">Bucket List</div></div>
+      </div>
+      <div class="twocol">
+        <div><label class="flbl">Cost <span class="fopt">(optional)</span></label><input type="text" id="ncost" placeholder="e.g. £30 each" autocomplete="off"></div>
+        <div><label class="flbl">Duration <span class="fopt">(optional)</span></label><input type="text" id="ndur" placeholder="e.g. Half a day" autocomplete="off"></div>
+      </div>
+      <label class="flbl">Pin a location <span class="fopt">(optional)</span></label>
+      <div class="mapp"><div id="add-map"></div><div class="maphint" id="mhint">Tap map to drop a pin</div></div>
+      <div class="locd" id="locd"></div>
+      <button class="subbtn" onclick="submitAct()">Send for approval ➜</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-pending"><div id="pcontent"></div></div>
+
+  <div class="view" id="view-map" style="padding-bottom:0;position:relative">
+    <div style="position:relative">
+      <div id="main-map"></div>
+      <div class="mapleg">
+        <div class="li"><div class="ld" style="background:var(--t5)"></div>Local</div>
+        <div class="li"><div class="ld" style="background:var(--r4)"></div>Last Minute</div>
+        <div class="li"><div class="ld" style="background:var(--w5)"></div>Weekend</div>
+        <div class="li"><div class="ld" style="background:var(--g5)"></div>Bucket List</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bnav">
+    <button class="nbtn active" id="nav-home" onclick="sv('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="nlbl">Our List</span></button>
+    <button class="nbtn" id="nav-decide" onclick="sv('decide')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg><span class="nlbl">Decide</span></button>
+    <button class="nbtn" id="nav-add" onclick="sv('add')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="nlbl">Add</span></button>
+    <button class="nbtn" id="nav-pending" onclick="sv('pending')"><div id="pbadge" class="badge" style="display:none"></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="nlbl">Pending</span></button>
+    <button class="nbtn" id="nav-map" onclick="sv('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg><span class="nlbl">Map</span></button>
+  </nav>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="movo" id="dmodal" onclick="closeMod('dmodal')">
+  <div class="mbox"><div class="mhdl"></div><div id="mbody"></div></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="movo" id="smodal" onclick="closeMod('smodal')">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdl"></div>
+    <div class="mttl">Settings</div>
+    <div class="ssec">
+      <h3>Session</h3>
+      <div class="sinfo"><span class="sdot-g"></span><span id="swoami">–</span></div>
+      <div class="sinfo" style="margin-top:6px">Adventures sync across both phones in real time via Supabase. Auto-lock after 15 minutes of inactivity.</div>
+    </div>
+    <div class="ssec">
+      <h3>Security</h3>
+      <div class="sinfo">Your API key is stored as a one-way SHA-256 hash and cannot be recovered. If you lose it you'll need to reset.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="sbtn" onclick="closeMod('smodal');logout()">Switch explorer</button>
+        <button class="sbtn danger" onclick="doReset()">Reset all data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div id="lockscreen">
+  <div style="font-size:52px">🔒</div>
+  <div class="ltitle">Session locked</div>
+  <p>15 minutes of inactivity</p>
+  <input id="lock-kinput" type="text" placeholder="Enter your key to unlock" maxlength="19" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="characters" oninput="fmtKey(this)" onkeydown="if(event.key==='Enter')doUnlock()">
+  <div class="lock-err" id="lock-err"></div>
+  <button class="abtn gold" style="max-width:240px" onclick="doUnlock()">Unlock →</button>
+  <div class="alink" style="color:rgba(210,170,187,.5)" onclick="lockLogout()">Sign out instead</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ── SUPABASE ──────────────────────────────────────────────────────
+const { createClient } = supabase;
+const sb = createClient(
+  'https://xnpzkbljqaiwrvkimpxp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhucHprYmxqcWFpd3J2a2ltcHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjYyMzEsImV4cCI6MjA5MjcwMjIzMX0.6JbR75VQzTp8cc5gcovSP9Hk_TB_vYw-WM5jA4bA8hI'
+);
+
+// ── CATEGORY META ─────────────────────────────────────────────────
+const CAT = {
+  local:  {icon:'🗺️',label:'Local',        tag:'tg-l', aico:'ai-local',  color:'#2A5268',acard:'ac-local'},
+  lm:     {icon:'⚡', label:'Last Minute',  tag:'tg-lm',aico:'ai-lm',     color:'#C8685A',acard:'ac-lm'},
+  wknd:   {icon:'🏕️',label:'Weekend Away', tag:'tg-w', aico:'ai-wknd',   color:'#6B3450',acard:'ac-wknd'},
+  bucket: {icon:'✨', label:'Bucket List',  tag:'tg-b', aico:'ai-bucket', color:'#C8921A',acard:'ac-bucket'}
+};
+
+// ── SECURITY ─────────────────────────────────────────────────────
+const Sec = {
+  generate() {
+    const a = new Uint8Array(8); crypto.getRandomValues(a);
+    const h = Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+    return `${h.slice(0,4)}-${h.slice(4,8)}-${h.slice(8,12)}-${h.slice(12,16)}`;
+  },
+  async hash(key) {
+    const clean = key.replace(/-/g,'').toUpperCase();
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clean));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  },
+  sanitize(s) {
+    if(s==null)return''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML;
+  }
+};
+
+// ── RATE LIMITER ──────────────────────────────────────────────────
+const RL = {
+  attempts:0, until:0,
+  ok(){return Date.now()>=this.until;},
+  fail(){this.attempts++;if(this.attempts>=5){this.until=Date.now()+30000;this.attempts=0;}},
+  win(){this.attempts=0;this.until=0;},
+  secs(){return Math.ceil(Math.max(0,this.until-Date.now())/1000);}
+};
+
+// ── DATA ──────────────────────────────────────────────────────────
+const LKEY = 'adventures_v5';
+let db = {users:[], activities:[]};
+
+function saveLocal() {
+  try { localStorage.setItem(LKEY, JSON.stringify(db)); } catch(e){}
+}
+
+function loadLocal() {
+  try {
+    const r = localStorage.getItem(LKEY);
+    if(r) { const d = JSON.parse(r); db.users=d.users||[]; db.activities=d.activities||[]; }
+  } catch {}
+}
+
+// ── DATA CONVERSION ───────────────────────────────────────────────
+function actToRow(a) {
+  return {
+    id: a.id,
+    title: a.title,
+    description: a.desc||'',
+    category: a.category,
+    cost: a.cost||'',
+    duration: a.duration||'',
+    added_by: a.addedBy,
+    status: a.status,
+    loc_lat: a.loc?a.loc.lat:null,
+    loc_lng: a.loc?a.loc.lng:null,
+    loc_name: a.loc?a.loc.name:null,
+    completed_at: a.completedAt?new Date(a.completedAt).toISOString():null
+  };
+}
+
+function rowToAct(r) {
+  return {
+    id: r.id,
+    title: r.title,
+    desc: r.description||'',
+    category: r.category,
+    cost: r.cost||'',
+    duration: r.duration||'',
+    addedBy: r.added_by,
+    status: r.status,
+    loc: r.loc_lat?{lat:r.loc_lat,lng:r.loc_lng,name:r.loc_name}:null,
+    completedAt: r.completed_at?new Date(r.completed_at).getTime():null,
+    createdAt: new Date(r.created_at).getTime()
+  };
+}
+
+function userToRow(u) { return {name:u.name,key_hash:u.keyHash}; }
+function rowToUser(r) { return {name:r.name,keyHash:r.key_hash}; }
+
+// ── SYNC STATUS ───────────────────────────────────────────────────
+function setSyncStatus(s) {
+  const d = document.getElementById('sync-dot');
+  if(!d) return;
+  d.className = 'sync-dot' + (s==='syncing'?' syncing':s==='error'?' error':'');
+  d.title = s==='syncing'?'Syncing…':s==='error'?'Offline — changes saved locally':'Synced';
+}
+
+// ── SUPABASE OPERATIONS ───────────────────────────────────────────
+async function fetchAll() {
+  setSyncStatus('syncing');
+  try {
+    const [{data:users,error:ue},{data:acts,error:ae}] = await Promise.all([
+      sb.from('users').select('*'),
+      sb.from('activities').select('*').order('created_at',{ascending:false})
+    ]);
+    if(ue||ae) throw new Error();
+    db.users = (users||[]).map(rowToUser);
+    db.activities = (acts||[]).map(rowToAct);
+    saveLocal();
+    setSyncStatus('ok');
+    return true;
+  } catch {
+    setSyncStatus('error');
+    return false;
+  }
+}
+
+async function upsertActivity(a) {
+  setSyncStatus('syncing');
+  try {
+    const {error} = await sb.from('activities').upsert(actToRow(a));
+    if(error) throw error;
+    setSyncStatus('ok');
+  } catch { setSyncStatus('error'); }
+}
+
+async function upsertUsers(users) {
+  setSyncStatus('syncing');
+  try {
+    for(const u of users) {
+      const {error} = await sb.from('users').upsert(userToRow(u),{onConflict:'name'});
+      if(error) throw error;
+    }
+    setSyncStatus('ok');
+  } catch { setSyncStatus('error'); }
+}
+
+// ── REALTIME ──────────────────────────────────────────────────────
+function subscribeRealtime() {
+  sb.channel('db-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'activities'},payload=>{
+      if(!currentUser) return;
+      if(payload.eventType==='DELETE') {
+        db.activities = db.activities.filter(x=>x.id!==payload.old.id);
+      } else {
+        const a = rowToAct(payload.new);
+        const idx = db.activities.findIndex(x=>x.id===a.id);
+        if(idx>=0) db.activities[idx]=a; else db.activities.unshift(a);
+      }
+      saveLocal(); renderAll(); updateBadge(); refreshMainMap();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'users'},payload=>{
+      if(payload.eventType!=='DELETE') {
+        const u = rowToUser(payload.new);
+        const idx = db.users.findIndex(x=>x.name===u.name);
+        if(idx>=0) db.users[idx]=u; else db.users.push(u);
+        saveLocal(); buildCards();
+      }
+    })
+    .subscribe();
+}
+
+// ── SESSION ───────────────────────────────────────────────────────
+let currentUser = null, lockedUser = null;
+
+function loadSession() {
+  try {
+    const s = localStorage.getItem('adv_sess_v5');
+    if(s) { const p=JSON.parse(s); if(db.users.some(u=>u.name===p.name)) currentUser={name:p.name}; }
+  } catch {}
+}
+
+function saveSession() {
+  try {
+    if(currentUser) localStorage.setItem('adv_sess_v5',JSON.stringify({name:currentUser.name}));
+    else localStorage.removeItem('adv_sess_v5');
+  } catch {}
+}
+
+// ── AUTO-LOCK ─────────────────────────────────────────────────────
+const LOCK_MS = 15*60*1000;
+let lockTimer = null;
+function armLock() { clearTimeout(lockTimer); if(currentUser) lockTimer=setTimeout(lock,LOCK_MS); }
+function lock() {
+  if(!currentUser) return;
+  lockedUser=currentUser; currentUser=null;
+  document.getElementById('lockscreen').classList.add('show');
+  document.getElementById('lock-kinput').value='';
+  document.getElementById('lock-err').textContent='';
+}
+async function doUnlock() {
+  if(!lockedUser){lockLogout();return;}
+  if(!RL.ok()){document.getElementById('lock-err').textContent=`Locked — wait ${RL.secs()}s`;return;}
+  const raw=document.getElementById('lock-kinput').value;
+  if(!raw.trim()){document.getElementById('lock-err').textContent='Enter your key';return;}
+  const h=await Sec.hash(raw);
+  const u=db.users.find(x=>x.name===lockedUser.name&&x.keyHash===h);
+  if(u){RL.win();currentUser=lockedUser;lockedUser=null;saveSession();document.getElementById('lockscreen').classList.remove('show');armLock();}
+  else{
+    RL.fail();
+    const el=document.getElementById('lock-kinput');
+    el.classList.add('err');setTimeout(()=>el.classList.remove('err'),400);
+    document.getElementById('lock-err').textContent=RL.ok()?`Wrong key — ${5-RL.attempts} left`:`Too many attempts — wait ${RL.secs()}s`;
+    el.value='';
+  }
+}
+function lockLogout(){lockedUser=null;currentUser=null;saveSession();document.getElementById('lockscreen').classList.remove('show');logout();}
+['touchstart','click','keydown'].forEach(e=>document.addEventListener(e,()=>{if(currentUser)armLock();},{passive:true}));
+
+// ── STARS ─────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<90;i++){
+    const s=document.createElement('div');s.className='star';const sz=Math.random()*2.2+.8;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*65}%;--o:${(Math.random()*.5+.15).toFixed(2)};--d:${(Math.random()*3+1.5).toFixed(1)}s;--del:-${(Math.random()*4).toFixed(1)}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ── AUTH ──────────────────────────────────────────────────────────
+let loginTarget=null, genKeys={}, setupNames={};
+
+function showStep(id){document.querySelectorAll('.astep').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function buildCards() {
+  const w=document.getElementById('ex-cards'); w.innerHTML='';
+  if(!db.users.length){
+    w.innerHTML='<p style="grid-column:span 2;text-align:center;font-size:13px;color:var(--inkl);line-height:1.6;padding:8px 0">Tap below to get started!</p>';
+    return;
+  }
+  db.users.forEach(u=>{
+    const c=document.createElement('div');c.className='ex-card';
+    c.innerHTML=`<div class="ex-av">${Sec.sanitize(u.name[0])}</div><div class="ex-name">${Sec.sanitize(u.name)}</div>`;
+    c.onclick=()=>pickEx(u,c); w.appendChild(c);
+  });
+}
+
+function pickEx(u,card){
+  document.querySelectorAll('.ex-card').forEach(c=>c.classList.remove('on'));
+  card.classList.add('on'); loginTarget=u;
+  document.getElementById('kinput').value='';
+  document.getElementById('kwho').textContent=Sec.sanitize(u.name)+"'s API key";
+  document.getElementById('lockout-msg').classList.remove('show');
+  document.getElementById('ksec').classList.add('show');
+  document.getElementById('kinput').focus();
+}
+
+function resetPick(){loginTarget=null;document.querySelectorAll('.ex-card').forEach(c=>c.classList.remove('on'));document.getElementById('ksec').classList.remove('show');}
+
+function fmtKey(el){
+  let raw=el.value.replace(/[^A-Fa-f0-9]/g,'').toUpperCase().slice(0,16);
+  const pts=[];for(let i=0;i<raw.length;i+=4)pts.push(raw.slice(i,i+4));
+  el.value=pts.join('-');
+}
+
+async function pasteKey(){
+  try{const t=await navigator.clipboard.readText();const el=document.getElementById('kinput');el.value=t;fmtKey(el);}
+  catch{showToast('Paste manually into the field');}
+}
+
+async function doLogin(){
+  if(!loginTarget)return;
+  if(!RL.ok()){showLockout();return;}
+  const raw=document.getElementById('kinput').value;
+  const el=document.getElementById('kinput');
+  if(!raw.trim()){el.classList.add('err');setTimeout(()=>el.classList.remove('err'),400);showToast('Enter your API key');return;}
+  const h=await Sec.hash(raw);
+  if(h===loginTarget.keyHash){RL.win();currentUser={name:loginTarget.name};saveSession();launchApp();}
+  else{
+    RL.fail();el.classList.add('err');setTimeout(()=>el.classList.remove('err'),400);
+    if(!RL.ok())showLockout();else showToast(`Wrong key — ${5-RL.attempts} attempt${5-RL.attempts===1?'':'s'} left`);
+    el.value='';
+  }
+}
+
+function showLockout(){
+  const m=document.getElementById('lockout-msg');m.classList.add('show');
+  const t=setInterval(()=>{const s=RL.secs();if(s<=0){m.classList.remove('show');clearInterval(t);}else m.textContent=`Too many attempts — wait ${s}s`;},500);
+}
+
+function goSetup(){
+  genKeys={};setupNames={};
+  ['kb1','w1','kb2','w2'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('s1btn').style.display='block';document.getElementById('s1next').style.display='none';
+  document.getElementById('s2btn').style.display='block';document.getElementById('s2next').style.display='none';
+  document.getElementById('s1n').value='';document.getElementById('s2n').value='';
+  showStep('step-s1');
+}
+
+async function genKey1(){
+  const n=document.getElementById('s1n').value.trim();
+  if(!n){showToast('Enter a name first!');return;}
+  setupNames.n1=n;genKeys[1]=Sec.generate();
+  document.getElementById('kv1').textContent=genKeys[1];
+  document.getElementById('kb1').style.display='block';document.getElementById('w1').style.display='block';
+  document.getElementById('s1btn').style.display='none';document.getElementById('s1next').style.display='block';
+}
+
+function copyKey(n){
+  const k=genKeys[n];if(!k)return;
+  navigator.clipboard.writeText(k).then(()=>{
+    const b=document.getElementById('cb'+n);b.textContent='Copied! ✓';b.classList.add('done');
+    setTimeout(()=>{b.textContent='Copy key';b.classList.remove('done');},2000);
+  }).catch(()=>showToast('Long-press the key to copy'));
+}
+
+function toStep2(){
+  document.getElementById('s2n').value='';
+  document.getElementById('kb2').style.display='none';document.getElementById('w2').style.display='none';
+  document.getElementById('s2btn').style.display='block';document.getElementById('s2next').style.display='none';
+  showStep('step-s2');
+}
+
+async function genKey2(){
+  const n=document.getElementById('s2n').value.trim();
+  if(!n){showToast('Enter a name first!');return;}
+  setupNames.n2=n;genKeys[2]=Sec.generate();
+  document.getElementById('kv2').textContent=genKeys[2];
+  document.getElementById('kb2').style.display='block';document.getElementById('w2').style.display='block';
+  document.getElementById('s2btn').style.display='none';document.getElementById('s2next').style.display='block';
+}
+
+async function finishSetup(){
+  showToast('Saving your adventure book…');
+  const h1=await Sec.hash(genKeys[1]);
+  const h2=await Sec.hash(genKeys[2]);
+  db.users=[{name:setupNames.n1,keyHash:h1},{name:setupNames.n2,keyHash:h2}];
+  await upsertUsers(db.users);
+  saveLocal();genKeys={};
+  buildCards();showStep('step-pick');showToast('Adventure book ready! ✦');
+}
+
+// ── LAUNCH / LOGOUT ───────────────────────────────────────────────
+function launchApp(){
+  document.getElementById('screen-auth').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('uchip').textContent=currentUser.name;
+  renderAll();updateBadge();armLock();subscribeRealtime();
+  fetchAll().then(()=>{renderAll();updateBadge();refreshMainMap();});
+}
+
+function logout(){
+  clearTimeout(lockTimer);currentUser=null;saveSession();loginTarget=null;
+  document.getElementById('ksec').classList.remove('show');
+  document.querySelectorAll('.ex-card').forEach(c=>c.classList.remove('on'));
+  document.getElementById('kinput').value='';
+  document.getElementById('lockout-msg').classList.remove('show');
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-auth').classList.add('active');
+  closeMod('smodal');showStep('step-pick');
+}
+
+async function doReset(){
+  if(!confirm('Permanently delete all activities and accounts from both phones?'))return;
+  setSyncStatus('syncing');
+  try{await sb.from('activities').delete().neq('id',0);await sb.from('users').delete().neq('id','00000000-0000-0000-0000-000000000000');}catch{}
+  try{localStorage.removeItem(LKEY);localStorage.removeItem('adv_sess_v5');}catch{}
+  db={users:[],activities:[]};logout();buildCards();showToast('All data cleared.');setSyncStatus('ok');
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────────
+function sv(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('nav-'+v).classList.add('active');
+  if(v==='map')initMainMap();
+  if(v==='add')initAddMap();
+  if(v==='pending')renderPending();
+  if(v==='home')renderHome();
+  if(v==='decide'){document.getElementById('rcard').classList.remove('vis');document.getElementById('cdempty').style.display='none';}
+}
+
+// ── HOME ──────────────────────────────────────────────────────────
+function renderHome(){
+  const ap=db.activities.filter(a=>a.status==='approved');
+  const done=db.activities.filter(a=>a.status==='done');
+  let html='',any=false;
+  Object.keys(CAT).forEach(k=>{
+    const items=ap.filter(a=>a.category===k);
+    if(!items.length)return;any=true;
+    const m=CAT[k];
+    html+=`<div class="shdr"><span class="slbl2">${m.label}</span><div class="sline"></div></div>`;
+    html+=items.map(cardHTML).join('');
+  });
+  if(!any&&!done.length)html=`<div class="empty"><div class="empty-i">🧭</div><p>No adventures approved yet.<br>Add something and explore!</p></div>`;
+  if(done.length){
+    html+=`<div class="shdr"><span class="slbl2">Completed ✓</span><div class="sline"></div></div>`;
+    html+=done.map(doneCardHTML).join('');
+  }
+  document.getElementById('hcontent').innerHTML=html;
+}
+
+function cardHTML(a){
+  const m=CAT[a.category];
+  const ex=[];
+  if(a.cost)ex.push(`<span class="mpil">💰 ${Sec.sanitize(a.cost)}</span>`);
+  if(a.duration)ex.push(`<span class="mpil">⏱ ${Sec.sanitize(a.duration)}</span>`);
+  if(a.loc)ex.push(`<span class="mpil">📍 ${Sec.sanitize(a.loc.name.split(',')[0])}</span>`);
+  return `<div class="acard ${m.acard}" onclick="openDetail(${Number(a.id)})">
+    <div class="aico ${m.aico}">${m.icon}</div>
+    <div class="ainf"><div class="attl">${Sec.sanitize(a.title)}</div>
+    <div class="amet"><span class="tag ${m.tag}">${m.label}</span>${ex.join('')}</div></div></div>`;
+}
+
+function doneCardHTML(a){
+  const m=CAT[a.category];
+  const ex=[];
+  if(a.cost)ex.push(`<span class="mpil">💰 ${Sec.sanitize(a.cost)}</span>`);
+  if(a.loc)ex.push(`<span class="mpil">📍 ${Sec.sanitize(a.loc.name.split(',')[0])}</span>`);
+  return `<div class="acard ${m.acard} done-card" onclick="openDetail(${Number(a.id)})">
+    <div class="aico ${m.aico}">${m.icon}</div>
+    <div class="ainf"><div class="attl">${Sec.sanitize(a.title)}</div>
+    <div class="amet"><span class="tag tg-done">Done ✓</span>${ex.join('')}</div></div>
+    <div class="done-tick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+  </div>`;
+}
+
+// ── CANT DECIDE ───────────────────────────────────────────────────
+let cdFilt='all';
+function setFilt(el,f){document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));el.classList.add('on');cdFilt=f;document.getElementById('rcard').classList.remove('vis');document.getElementById('cdempty').style.display='none';}
+
+function spin(){
+  let pool=db.activities.filter(a=>a.status==='approved');
+  if(cdFilt!=='all')pool=pool.filter(a=>a.category===cdFilt);
+  if(!pool.length){document.getElementById('rcard').classList.remove('vis');document.getElementById('cdempty').style.display='block';return;}
+  document.getElementById('cdempty').style.display='none';
+  const ico=document.getElementById('sico');ico.classList.add('spinning');setTimeout(()=>ico.classList.remove('spinning'),500);
+  const p=pool[Math.floor(Math.random()*pool.length)];
+  const m=CAT[p.category];
+  document.getElementById('ri').textContent=m.icon;
+  document.getElementById('rt').textContent=p.title;
+  document.getElementById('rd').textContent=p.desc||'';
+  let meta=`<div class="rmi"><span class="tag ${m.tag}">${m.label}</span></div>`;
+  if(p.cost)meta+=`<div class="rmi">💰 ${Sec.sanitize(p.cost)}</div>`;
+  if(p.duration)meta+=`<div class="rmi">⏱ ${Sec.sanitize(p.duration)}</div>`;
+  document.getElementById('rm').innerHTML=meta;
+  const rc=document.getElementById('rcard');rc.classList.remove('vis');void rc.offsetWidth;rc.classList.add('vis');
+}
+
+// ── ADD ACTIVITY ──────────────────────────────────────────────────
+let selC_val='local', addMapI=null, addMkr=null, pendLoc=null;
+function selC(c){selC_val=c;Object.keys(CAT).forEach(k=>{document.getElementById('cat-'+k).className='catopt'+(k===c?' sel-'+k:'');});}
+
+function initAddMap(){
+  if(addMapI)return;
+  setTimeout(()=>{
+    addMapI=L.map('add-map',{zoomControl:true,attributionControl:false}).setView([54.5,-2.5],5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(addMapI);
+    addMapI.on('click',e=>{
+      pendLoc={lat:+e.latlng.lat.toFixed(5),lng:+e.latlng.lng.toFixed(5),name:'Pinned location'};
+      if(addMkr)addMkr.setLatLng(e.latlng);else addMkr=L.marker(e.latlng).addTo(addMapI);
+      document.getElementById('mhint').style.display='none';revGeo(e.latlng.lat,e.latlng.lng);
+    });
+  },120);
+}
+
+function revGeo(lat,lng){
+  document.getElementById('locd').textContent='Finding location…';
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    .then(r=>r.json()).then(d=>{const n=d.display_name?d.display_name.split(',').slice(0,2).join(',').trim():'Pinned location';if(pendLoc)pendLoc.name=n;document.getElementById('locd').textContent='📍 '+n;})
+    .catch(()=>{document.getElementById('locd').textContent='📍 Pinned location';});
+}
+
+async function submitAct(){
+  const title=document.getElementById('ntitle').value.trim();
+  if(!title){showToast('Give your adventure a name!');return;}
+  const other=db.users.find(u=>u.name!==currentUser.name);
+  const act={
+    id:Date.now(),title:title.slice(0,120),
+    desc:document.getElementById('ndesc').value.trim().slice(0,500),
+    category:selC_val,
+    cost:document.getElementById('ncost').value.trim().slice(0,40),
+    duration:document.getElementById('ndur').value.trim().slice(0,40),
+    addedBy:currentUser.name,status:'pending',loc:pendLoc,
+    completedAt:null,createdAt:Date.now()
+  };
+  db.activities.unshift(act);saveLocal();renderAll();updateBadge();
+  await upsertActivity(act);
+  ['ntitle','ndesc','ncost','ndur'].forEach(id=>document.getElementById(id).value='');
+  if(addMkr){addMkr.remove();addMkr=null;}pendLoc=null;
+  document.getElementById('locd').textContent='';document.getElementById('mhint').style.display='block';
+  showToast(`Sent to ${other?Sec.sanitize(other.name):'your partner'}! ✦`);sv('home');
+}
+
+// ── PENDING ───────────────────────────────────────────────────────
+function renderPending(){
+  const mine=db.activities.filter(a=>a.status==='pending'&&a.addedBy!==currentUser.name);
+  const byMe=db.activities.filter(a=>a.status==='pending'&&a.addedBy===currentUser.name);
+  let html='';
+  if(!mine.length&&!byMe.length)html=`<div class="empty"><div class="empty-i">✓</div><p>All caught up!<br>Nothing waiting for approval.</p></div>`;
+  if(mine.length){
+    html+=`<div class="shdr"><span class="slbl2">Awaiting your approval</span><div class="sline"></div></div>`;
+    mine.forEach(a=>{
+      const m=CAT[a.category];const d=[];
+      if(a.cost)d.push(`💰 ${Sec.sanitize(a.cost)}`);
+      if(a.duration)d.push(`⏱ ${Sec.sanitize(a.duration)}`);
+      if(a.loc)d.push(`📍 ${Sec.sanitize(a.loc.name.split(',')[0])}`);
+      html+=`<div class="pcard"><div class="pcbody"><div class="aico ${m.aico}">${m.icon}</div><div class="ainf">
+        <div class="pfrom">From ${Sec.sanitize(a.addedBy)}</div>
+        <div class="attl" style="font-size:15px;margin-bottom:4px">${Sec.sanitize(a.title)}</div>
+        ${a.desc?`<div class="pdesc">${Sec.sanitize(a.desc)}</div>`:''}
+        ${d.length?`<div class="pdet">${d.map(x=>`<span>${x}</span>`).join('')}</div>`:''}
+      </div></div>
+      <div class="pcact">
+        <button class="actbtn actno" onclick="decide(${Number(a.id)},'declined')">Not this time</button>
+        <button class="actbtn actyes" onclick="decide(${Number(a.id)},'approved')">Let's do it! ✓</button>
+      </div></div>`;
+    });
+  }
+  if(byMe.length){
+    html+=`<div class="shdr"><span class="slbl2">Sent by you</span><div class="sline"></div></div>`;
+    byMe.forEach(a=>{const m=CAT[a.category];html+=`<div class="acard ${m.acard}"><div class="aico ${m.aico}">${m.icon}</div><div class="ainf"><div class="attl">${Sec.sanitize(a.title)}</div><div class="amet"><span class="tag tg-p">Awaiting approval</span></div></div></div>`;});
+  }
+  document.getElementById('pcontent').innerHTML=html;updateBadge();
+}
+
+async function decide(id,status){
+  const a=db.activities.find(x=>x.id===id);
+  if(!a)return;
+  a.status=status;saveLocal();renderPending();renderHome();updateBadge();refreshMainMap();
+  await upsertActivity(a);
+  showToast(status==='approved'?'Adventure approved! ✦':'Maybe another time 🌿');
+}
+
+function updateBadge(){
+  if(!currentUser)return;
+  const n=db.activities.filter(a=>a.status==='pending'&&a.addedBy!==currentUser.name).length;
+  const b=document.getElementById('pbadge');b.style.display=n>0?'flex':'none';b.textContent=n;
+}
+
+// ── MAP ───────────────────────────────────────────────────────────
+let mainMapI=null,mainMkrs=[];
+function initMainMap(){
+  if(!mainMapI){
+    setTimeout(()=>{mainMapI=L.map('main-map',{zoomControl:true,attributionControl:false}).setView([54.5,-2.5],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(mainMapI);refreshMainMap();},120);
+  }else{mainMapI.invalidateSize();refreshMainMap();}
+}
+function refreshMainMap(){
+  if(!mainMapI)return;
+  mainMkrs.forEach(m=>m.remove());mainMkrs=[];
+  const pins=db.activities.filter(a=>a.status==='approved'&&a.loc);
+  if(!pins.length)return;
+  pins.forEach(a=>{
+    const m=CAT[a.category];
+    const icon=L.divIcon({className:'',html:`<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:${m.color};border:2.5px solid white;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>`,iconSize:[26,26],iconAnchor:[13,26]});
+    mainMkrs.push(L.marker([a.loc.lat,a.loc.lng],{icon}).bindPopup(`<strong style="font-family:'Playfair Display',serif;font-size:14px">${Sec.sanitize(a.title)}</strong><br><span style="font-size:11px;color:#4A2838">${Sec.sanitize(a.loc.name)}</span>`).addTo(mainMapI));
+  });
+  if(pins.length===1)mainMapI.setView([pins[0].loc.lat,pins[0].loc.lng],10);
+  else mainMapI.fitBounds(L.latLngBounds(pins.map(a=>[a.loc.lat,a.loc.lng])),{padding:[40,40]});
+}
+
+// ── DETAIL MODAL ──────────────────────────────────────────────────
+function openDetail(id){
+  const a=db.activities.find(x=>x.id===id);if(!a)return;
+  const m=CAT[a.category];
+  const d=[];
+  if(a.cost)d.push(`<div class="mdet">💰 ${Sec.sanitize(a.cost)}</div>`);
+  if(a.duration)d.push(`<div class="mdet">⏱ ${Sec.sanitize(a.duration)}</div>`);
+  const isDone=a.status==='done';
+  const doneDate=isDone&&a.completedAt?`<div class="mftr" style="margin-top:4px">Completed ${new Date(a.completedAt).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>`:'';
+  const actionBtn=isDone
+    ?`<button onclick="markDone(${Number(a.id)},false)" style="width:100%;border:1.5px solid var(--bdrm);background:none;border-radius:12px;padding:13px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--inkl);cursor:pointer;margin-top:16px">↩ Move back to list</button>`
+    :`<button onclick="markDone(${Number(a.id)},true)" style="width:100%;background:#2A7A4A;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Playfair Display',serif;font-size:16px;cursor:pointer;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px"><span>We did it!</span><span>🎉</span></button>`;
+  document.getElementById('mbody').innerHTML=`
+    <div style="margin-bottom:10px"><span class="tag ${isDone?'tg-done':m.tag}">${isDone?'Completed':m.label}</span></div>
+    <div class="mttl">${Sec.sanitize(a.title)}</div>
+    ${a.desc?`<div class="mdesc">${Sec.sanitize(a.desc)}</div>`:''}
+    ${d.length?`<div class="mdets">${d.join('')}</div>`:''}
+    ${a.loc?`<div class="mloc">📍 ${Sec.sanitize(a.loc.name)}</div>`:''}
+    <div class="mftr">Added by ${Sec.sanitize(a.addedBy)}</div>${doneDate}${actionBtn}`;
+  document.getElementById('dmodal').classList.add('open');
+}
+
+async function markDone(id,done){
+  const a=db.activities.find(x=>x.id===id);if(!a)return;
+  a.status=done?'done':'approved';
+  if(done)a.completedAt=Date.now();else delete a.completedAt;
+  saveLocal();closeMod('dmodal');renderHome();
+  await upsertActivity(a);
+  showToast(done?'Adventure completed! 🎉':'Moved back to your list');
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────
+function openSettings(){document.getElementById('swoami').textContent=currentUser?`Signed in as ${Sec.sanitize(currentUser.name)}`:'–';document.getElementById('smodal').classList.add('open');}
+function closeMod(id){document.getElementById(id).classList.remove('open');}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ── INIT ──────────────────────────────────────────────────────────
+function renderAll(){renderHome();renderPending();}
+
+// Load local cache immediately so UI isn't blank
+loadLocal();
+buildCards();
+loadSession();
+
+// Then fetch fresh data from Supabase in background
+document.getElementById('auth-loading').classList.add('show');
+fetchAll().then(ok=>{
+  document.getElementById('auth-loading').classList.remove('show');
+  buildCards();
+  if(currentUser && db.users.some(u=>u.name===currentUser.name)){
+    launchApp();
+  }
+}).catch(()=>{
+  document.getElementById('auth-loading').classList.remove('show');
+  if(currentUser)launchApp();
+});
+</script>
+</body>
+</html>
