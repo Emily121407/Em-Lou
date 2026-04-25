@@ -432,8 +432,53 @@ function initAddMap(){if(addMapI)return;setTimeout(()=>{addMapI=L.map('add-map',
 function revGeo(lat,lng){document.getElementById('locd').textContent='Finding location…';fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json').then(r=>r.json()).then(d=>{const n=d.display_name?d.display_name.split(',').slice(0,2).join(',').trim():'Pinned location';if(pendLoc)pendLoc.name=n;document.getElementById('locd').textContent='📍 '+n;}).catch(()=>{document.getElementById('locd').textContent='📍 Pinned location';});}
 async function submitAct(){const title=document.getElementById('ntitle').value.trim();if(!title){showToast('Give your adventure a name!');return;}const other=USERS.find(u=>u.name!==currentUser.name);const act={id:Date.now(),title:title.slice(0,120),desc:document.getElementById('ndesc').value.trim().slice(0,500),category:selC_val,cost:document.getElementById('ncost').value.trim().slice(0,40),duration:document.getElementById('ndur').value.trim().slice(0,40),addedBy:currentUser.name,status:'pending',loc:pendLoc,completedAt:null,createdAt:Date.now()};db.activities.unshift(act);saveLocal();renderAll();updateBadge();await upsertAct(act);['ntitle','ndesc','ncost','ndur'].forEach(id=>document.getElementById(id).value='');if(addMkr){addMkr.remove();addMkr=null;}pendLoc=null;document.getElementById('locd').textContent='';document.getElementById('mhint').style.display='block';showToast('Sent to '+san(other.name)+'! ✦');sv('home');}
 
-function renderPending(){const mine=db.activities.filter(a=>a.status==='pending'&&a.addedBy!==currentUser.name);const byMe=db.activities.filter(a=>a.status==='pending'&&a.addedBy===currentUser.name);let html='';if(!mine.length&&!byMe.length)html='<div class="empty"><div class="empty-i">✓</div><p>All caught up!<br>Nothing waiting for approval.</p></div>';if(mine.length){html+='<div class="shdr"><span class="slbl">Awaiting your approval</span><div class="sline"></div></div>';mine.forEach(a=>{const m=CAT[a.category];const d=[];if(a.cost)d.push('💰 '+san(a.cost));if(a.duration)d.push('⏱ '+san(a.duration));if(a.loc)d.push('📍 '+san(a.loc.name.split(',')[0]));html+='<div class="pcard"><div class="pcbody"><div class="aico '+m.aico+'">'+m.icon+'</div><div class="ainf"><div class="pfrom">From '+san(a.addedBy)+'</div><div class="attl" style="font-size:15px;margin-bottom:4px">'+san(a.title)+'</div>'+(a.desc?'<div class="pdesc">'+san(a.desc)+'</div>':'')+(d.length?'<div class="pdet">'+d.map(x=>'<span>'+x+'</span>').join('')+'</div>':'')+'</div></div><div class="pcact"><button class="actbtn actno" onclick="decide('+Number(a.id)+',' + "'declined'" + ')">Not this time</button><button class="actbtn actyes" onclick="decide('+Number(a.id)+',' + "'approved'" + ')">Let's do it! ✓</button></div></div>';});}if(byMe.length){html+='<div class="shdr"><span class="slbl">Sent by you</span><div class="sline"></div></div>';byMe.forEach(a=>{const m=CAT[a.category];html+='<div class="acard '+m.acard+'"><div class="aico '+m.aico+'">'+m.icon+'</div><div class="ainf"><div class="attl">'+san(a.title)+'</div><div class="amet"><span class="tag tg-p">Awaiting approval</span></div></div></div>';});}document.getElementById('pcontent').innerHTML=html;updateBadge();}
-async function decide(id,status){const a=db.activities.find(x=>x.id===id);if(!a)return;a.status=status;saveLocal();renderPending();renderHome();updateBadge();refreshMap();await upsertAct(a);showToast(status==='approved'?'Adventure approved! ✦':'Maybe another time 🌿');}
+function renderPending(){
+  var cont=document.getElementById('pcontent');
+  var mine=db.activities.filter(function(a){return a.status==='pending'&&a.addedBy!==currentUser.name;});
+  var byMe=db.activities.filter(function(a){return a.status==='pending'&&a.addedBy===currentUser.name;});
+  cont.innerHTML='';
+  if(!mine.length&&!byMe.length){cont.innerHTML='<div class="empty"><div class="empty-i">&#10003;</div><p>All caught up!<br>Nothing waiting for approval.</p></div>';updateBadge();return;}
+  if(mine.length){
+    var hdr=document.createElement('div');hdr.className='shdr';hdr.innerHTML='<span class="slbl">Awaiting your approval</span><div class="sline"></div>';cont.appendChild(hdr);
+    mine.forEach(function(a){
+      var m=CAT[a.category];
+      var d=[];
+      if(a.cost)d.push('&#128176; '+san(a.cost));
+      if(a.duration)d.push('&#9201; '+san(a.duration));
+      if(a.loc)d.push('&#128205; '+san(a.loc.name.split(',')[0]));
+      var card=document.createElement('div');
+      card.className='pcard';
+      var body=document.createElement('div');body.className='pcbody';
+      body.innerHTML='<div class="aico '+m.aico+'">'+m.icon+'</div><div class="ainf"><div class="pfrom">From '+san(a.addedBy)+'</div><div class="attl" style="font-size:15px;margin-bottom:4px">'+san(a.title)+'</div>'+(a.desc?'<div class="pdesc">'+san(a.desc)+'</div>':'')+(d.length?'<div class="pdet">'+d.map(function(x){return'<span>'+x+'</span>';}).join('')+'</div>':'')+'</div>';
+      var acts=document.createElement('div');acts.className='pcact';
+      var noBtn=document.createElement('button');noBtn.className='actbtn actno';noBtn.textContent='Not this time';
+      var yesBtn=document.createElement('button');yesBtn.className='actbtn actyes';yesBtn.textContent="Let's do it! ✓";
+      var aid=Number(a.id);
+      noBtn.addEventListener('click',function(){decide(aid,'declined');});
+      yesBtn.addEventListener('click',function(){decide(aid,'approved');});
+      acts.appendChild(noBtn);acts.appendChild(yesBtn);
+      card.appendChild(body);card.appendChild(acts);
+      cont.appendChild(card);
+    });
+  }
+  if(byMe.length){
+    var hdr2=document.createElement('div');hdr2.className='shdr';hdr2.innerHTML='<span class="slbl">Sent by you</span><div class="sline"></div>';cont.appendChild(hdr2);
+    byMe.forEach(function(a){
+      var m=CAT[a.category];
+      var card=document.createElement('div');card.className='acard '+m.acard;
+      card.innerHTML='<div class="aico '+m.aico+'">'+m.icon+'</div><div class="ainf"><div class="attl">'+san(a.title)+'</div><div class="amet"><span class="tag tg-p">Awaiting approval</span></div></div>';
+      cont.appendChild(card);
+    });
+  }
+  updateBadge();
+}
+async function decide(id,status){
+  var a=db.activities.find(function(x){return x.id===id;});
+  if(!a)return;
+  a.status=status;saveLocal();renderPending();renderHome();updateBadge();refreshMap();
+  await upsertAct(a);
+  showToast(status==='approved'?'Adventure approved! ✶':'Maybe another time');
+}
 function updateBadge(){if(!currentUser)return;const n=db.activities.filter(a=>a.status==='pending'&&a.addedBy!==currentUser.name).length;const b=document.getElementById('pbadge');b.style.display=n>0?'flex':'none';b.textContent=n;}
 
 let mainMapI=null,mainMkrs=[];
